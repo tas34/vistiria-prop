@@ -1,0 +1,82 @@
+{
+  "entities": {
+    "Property": {
+      "title": "Property Listing",
+      "description": "Luxury real estate property listings managed by Vistiria Properties",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "maxLength": 200 },
+        "location": { "type": "string", "maxLength": 200 },
+        "microMarket": { "type": "string", "maxLength": 100 },
+        "city": { "type": "string", "maxLength": 100 },
+        "state": { "type": "string", "maxLength": 100 },
+        "priceDisplay": { "type": "string", "maxLength": 50 },
+        "priceNumeric": { "type": "number" },
+        "type": { "type": "string", "enum": ["apartment", "penthouse", "villa", "duplex"] },
+        "configuration": { "type": "string", "maxLength": 100 },
+        "carpetAreaSqFt": { "type": "number" },
+        "superAreaSqFt": { "type": "number" },
+        "floorLevel": { "type": "string", "maxLength": 50 },
+        "furnishingStatus": { "type": "string", "enum": ["Bare Shell", "Semi-Furnished", "Fully Furnished Designer"] },
+        "facing": { "type": "string", "maxLength": 50 },
+        "overview": { "type": "string", "maxLength": 4000 },
+        "amenities": { "type": "array" },
+        "heroImage": { "type": "string", "maxLength": 800000 },
+        "gallery": { "type": "array" },
+        "isFeatured": { "type": "boolean" },
+        "isSamplePlaceholder": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "location", "city", "priceDisplay", "priceNumeric", "type", "configuration"]
+    },
+    "Inquiry": {
+      "title": "Buyer Inquiry & Site Visit Lead",
+      "description": "Property acquisition inquiries, contact requests, and site visit bookings submitted by prospective buyers",
+      "type": "object",
+      "properties": {
+        "fullName": { "type": "string", "maxLength": 120 },
+        "phone": { "type": "string", "maxLength": 30 },
+        "email": { "type": "string", "maxLength": 150 },
+        "type": { "type": "string", "enum": ["general", "site_visit", "buyer_desk"] },
+        "propertyId": { "type": "string", "maxLength": 128 },
+        "propertyTitle": { "type": "string", "maxLength": 200 },
+        "budgetRange": { "type": "string", "maxLength": 100 },
+        "preferredLocation": { "type": "string", "maxLength": 150 },
+        "preferredDate": { "type": "string", "maxLength": 50 },
+        "preferredTimeSlot": { "type": "string", "maxLength": 50 },
+        "message": { "type": "string", "maxLength": 3000 },
+        "status": { "type": "string", "enum": ["pending", "contacted", "scheduled", "closed"] },
+        "userId": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["fullName", "phone", "type", "status"]
+    },
+    "Admin": {
+      "title": "System Administrator",
+      "description": "Designated administrator identity with management access",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string", "maxLength": 150 },
+        "role": { "type": "string", "enum": ["admin"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["email", "role"]
+    }
+  },
+  "firestore": {
+    "/properties/{propertyId}": {
+      "schema": "Property",
+      "description": "Collection of verified luxury real estate property listings"
+    },
+    "/inquiries/{inquiryId}": {
+      "schema": "Inquiry",
+      "description": "Collection of customer inquiries and site visit appointment requests"
+    },
+    "/admins/{adminId}": {
+      "schema": "Admin",
+      "description": "Collection of verified administrative user profiles"
+    }
+  }
+}

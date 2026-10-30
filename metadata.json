@@ -1,0 +1,6 @@
+{
+  "name": "Vistiria Properties",
+  "description": "Vistiria Properties is a premier property sales firm based in Sector 66, Gurugram, Delhi NCR, offering verified residential and commercial acquisitions across India.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

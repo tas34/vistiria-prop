@@ -1,0 +1,96 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Default Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Hardened Primitives
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        ((request.auth.token.email == 't4990418@gmail.com' || request.auth.token.email == 'vistiria.properties@gmail.com') && request.auth.token.email_verified == true) ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    // Property Validation Blueprint
+    function isValidProperty(data) {
+      return data.keys().hasAll(['title', 'location', 'city', 'priceDisplay', 'priceNumeric', 'type', 'configuration']) &&
+        data.title is string && data.title.size() <= 200 &&
+        data.location is string && data.location.size() <= 200 &&
+        data.city is string && data.city.size() <= 100 &&
+        data.priceDisplay is string && data.priceDisplay.size() <= 50 &&
+        data.priceNumeric is number && data.priceNumeric >= 0 &&
+        data.type in ['apartment', 'penthouse', 'villa', 'duplex'] &&
+        data.configuration is string && data.configuration.size() <= 100 &&
+        (!('overview' in data) || (data.overview is string && data.overview.size() <= 4000)) &&
+        (!('heroImage' in data) || (data.heroImage is string && data.heroImage.size() <= 800000)) &&
+        (!('gallery' in data) || (data.gallery is list && data.gallery.size() <= 10));
+    }
+
+    // Inquiry Validation Blueprint
+    function isValidInquiry(data) {
+      return data.keys().hasAll(['fullName', 'phone', 'type', 'status']) &&
+        data.fullName is string && data.fullName.size() >= 2 && data.fullName.size() <= 120 &&
+        data.phone is string && data.phone.size() >= 7 && data.phone.size() <= 30 &&
+        data.type in ['general', 'site_visit', 'buyer_desk'] &&
+        data.status in ['pending', 'contacted', 'scheduled', 'closed'] &&
+        (!('email' in data) || (data.email is string && data.email.size() <= 150)) &&
+        (!('propertyId' in data) || (data.propertyId is string && data.propertyId.size() <= 128)) &&
+        (!('propertyTitle' in data) || (data.propertyTitle is string && data.propertyTitle.size() <= 200)) &&
+        (!('budgetRange' in data) || (data.budgetRange is string && data.budgetRange.size() <= 100)) &&
+        (!('preferredLocation' in data) || (data.preferredLocation is string && data.preferredLocation.size() <= 150)) &&
+        (!('preferredDate' in data) || (data.preferredDate is string && data.preferredDate.size() <= 50)) &&
+        (!('preferredTimeSlot' in data) || (data.preferredTimeSlot is string && data.preferredTimeSlot.size() <= 50)) &&
+        (!('message' in data) || (data.message is string && data.message.size() <= 3000)) &&
+        (!('userId' in data) || (data.userId is string && data.userId.size() <= 128));
+    }
+
+    // Properties Collection (Publicly browseable, admin-managed)
+    match /properties/{propertyId} {
+      allow get, list: if true;
+      allow create: if isValidId(propertyId) && isAdmin() && isValidProperty(incoming());
+      allow update: if isValidId(propertyId) && isAdmin() && isValidProperty(incoming());
+      allow delete: if isValidId(propertyId) && isAdmin();
+    }
+
+    // Inquiries Collection (Client submissions, strict privacy, admin status management)
+    match /inquiries/{inquiryId} {
+      allow get: if isValidId(inquiryId) && (isAdmin() || (isSignedIn() && existing().userId == request.auth.uid));
+      allow list: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow create: if isValidId(inquiryId) &&
+                    isValidInquiry(incoming()) &&
+                    incoming().status == 'pending' &&
+                    (!('userId' in incoming()) || !isSignedIn() || incoming().userId == request.auth.uid);
+      allow update: if isValidId(inquiryId) &&
+                    isAdmin() &&
+                    isValidInquiry(incoming()) &&
+                    incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt', 'notes']);
+      allow delete: if isValidId(inquiryId) && isAdmin();
+    }
+
+    // Admins Collection
+    match /admins/{adminId} {
+      allow read: if isAdmin();
+      allow write: if isAdmin();
+    }
+  }
+}

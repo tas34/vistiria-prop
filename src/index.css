@@ -1,0 +1,36 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --font-serif: 'Playfair Display', Georgia, serif;
+    --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  }
+  
+  body {
+    font-family: var(--font-sans);
+    color: #171717;
+    background-color: #FAF9F5;
+  }
+
+  h1, h2, h3, .font-display {
+    font-family: var(--font-serif);
+  }
+}
+
+@layer utilities {
+  .font-serif-display {
+    font-family: 'Playfair Display', Georgia, serif;
+  }
+  .font-sans-body {
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  }
+  .text-glow-gold {
+    text-shadow: 0 0 16px rgba(243, 226, 200, 0.6), 0 0 32px rgba(222, 197, 160, 0.38);
+  }
+  .text-glow-gold-subtle {
+    text-shadow: 0 0 12px rgba(222, 197, 160, 0.35);
+  }
+  .text-glow-gold-strong {
+    text-shadow: 0 0 20px rgba(243, 226, 200, 0.75), 0 0 42px rgba(222, 197, 160, 0.5);
+  }
+}
