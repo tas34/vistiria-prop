@@ -4,8 +4,13 @@ import path from 'path';
 import {defineConfig} from 'vite';
 
 export default defineConfig(() => {
+  // Automatically detects repository name from GitHub Actions GITHUB_REPOSITORY (e.g. 'owner/repo')
+  // or falls back to VITE_BASE_PATH / relative './'
+  const repoName = process.env.GITHUB_REPOSITORY ? process.env.GITHUB_REPOSITORY.split('/')[1] : '';
+  const basePath = process.env.VITE_BASE_PATH || (repoName ? `/${repoName}/` : './');
+
   return {
-    base: './',
+    base: basePath,
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {
