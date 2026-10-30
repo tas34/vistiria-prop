@@ -25,7 +25,7 @@ interface NavigationContextType {
   showToast: (message: string) => void;
 }
 
-const DEFAULT_HERO_IMAGE = '/assets/aistudio/WhatsApp_Image_2026-10-29_at_4.49.15_PM_83440257.jpeg';
+const DEFAULT_HERO_IMAGE = './assets/aistudio/WhatsApp_Image_2026-10-29_at_4.49.15_PM_83440257.jpeg';
 
 const NavigationContext = createContext<NavigationContextType | undefined>(undefined);
 
@@ -40,12 +40,22 @@ export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   });
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Sync state from URL hash or pathname on load
+  // Sync state from URL hash or pathname on load (works on both root domains & GitHub Pages subpaths)
   useEffect(() => {
     const handleUrlChange = () => {
-      const hash = window.location.hash.replace(/^#\/?/, '');
-      const path = window.location.pathname.replace(/^\//, '');
-      const target = hash || path;
+      const cleanHash = window.location.hash.replace(/^#\/?/, '');
+      const segments = window.location.pathname.split('/').filter(Boolean);
+      const lastSegment = segments[segments.length - 1] || '';
+      const secondLastSegment = segments[segments.length - 2] || '';
+
+      let target = cleanHash;
+      if (!target) {
+        if (secondLastSegment === 'properties') {
+          target = `properties/${lastSegment}`;
+        } else if (['properties', 'about', 'contact', 'admin'].includes(lastSegment)) {
+          target = lastSegment;
+        }
+      }
 
       if (target.startsWith('properties/')) {
         const id = target.replace('properties/', '');
