@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { PropertyListing } from '../types/property';
 import { SAMPLE_PROPERTIES } from '../data/properties';
+import { resolveAssetUrl } from '../utils/assetUrl';
 
 export type PageRoute = 'home' | 'properties' | 'property-detail' | 'about' | 'contact' | 'admin';
 
@@ -25,7 +26,7 @@ interface NavigationContextType {
   showToast: (message: string) => void;
 }
 
-const DEFAULT_HERO_IMAGE = './assets/aistudio/WhatsApp_Image_2026-10-29_at_4.49.15_PM_83440257.jpeg';
+const DEFAULT_HERO_IMAGE = resolveAssetUrl('assets/aistudio/WhatsApp_Image_2026-10-29_at_4.49.15_PM_83440257.jpeg');
 
 const NavigationContext = createContext<NavigationContextType | undefined>(undefined);
 

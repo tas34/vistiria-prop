@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { PropertyListing } from '../../types/property';
 import { useNavigation } from '../../context/NavigationContext';
+import { resolveAssetUrl } from '../../utils/assetUrl';
 import { ArrowUpRight, Calendar, MapPin, Image as ImageIcon } from 'lucide-react';
 
 interface PropertyCardProps {
@@ -23,7 +24,7 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({ property, featured =
       <div className="relative aspect-[4/3] w-full overflow-hidden bg-neutral-900">
         {!imageError ? (
           <img
-            src={property.heroImage}
+            src={resolveAssetUrl(property.heroImage)}
             alt={property.title}
             onError={() => setImageError(true)}
             className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"

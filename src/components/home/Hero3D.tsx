@@ -3,6 +3,10 @@ import gsap from 'gsap';
 import { motion, AnimatePresence } from 'motion/react';
 import { useNavigation } from '../../context/NavigationContext';
 import { BUSINESS_INFO } from '../../constants/business';
+import { resolveAssetUrl } from '../../utils/assetUrl';
+import heroSlide01Img from '../../assets/images/WhatsApp_Image_2026-10-29_at_4.49.15_PM_83440257.jpeg';
+import heroSlide02Img from '../../assets/images/hero_luxury_penthouse_1793271569251.jpg';
+import heroSlide03Img from '../../assets/images/property_golf_course_tower_1793271569410.jpg';
 import {
   ArrowRight,
   ShieldCheck,
@@ -31,7 +35,7 @@ const HERO_SLIDES: HeroSlide[] = [
     headlineFirst: 'Find Your',
     headlineSecond: 'Perfect Home',
     subtitle: 'Modern living. Prime locations. Exceptional value. Your dream home is closer than you think.',
-    image: '/assets/aistudio/WhatsApp_Image_2026-10-29_at_4.49.15_PM_83440257.jpeg',
+    image: heroSlide01Img,
     propertyId: 'the-palm-estate-villa',
     locationTag: 'DLF Phase 1 / Golf Greens',
   },
@@ -42,7 +46,7 @@ const HERO_SLIDES: HeroSlide[] = [
     headlineFirst: 'Sky-High',
     headlineSecond: 'Architectural Luxury',
     subtitle: 'Double-height glass walls, panoramic twilight horizons, and bespoke Italian craftsmanship in Sector 66.',
-    image: '/src/assets/images/hero_luxury_penthouse_1793271569251.jpg',
+    image: heroSlide02Img,
     propertyId: 'sovereign-penthouse-sector-66',
     locationTag: 'Sector 66, Gurugram',
   },
@@ -53,7 +57,7 @@ const HERO_SLIDES: HeroSlide[] = [
     headlineFirst: 'Prestige',
     headlineSecond: 'Living in Gurugram',
     subtitle: 'Cantilevered balcony terraces overlooking lush landscaped resort greens on Golf Course Extension Road.',
-    image: '/src/assets/images/property_golf_course_tower_1793271569410.jpg',
+    image: heroSlide03Img,
     propertyId: 'park-horizon-condominiums',
     locationTag: 'Golf Course Extension Road',
   },
@@ -265,8 +269,15 @@ export const Hero3D: React.FC = () => {
             className="absolute inset-0 w-full h-full"
           >
             <img
-              src={currentSlide.image}
+              src={resolveAssetUrl(currentSlide.image)}
               alt={currentSlide.headlineSecond}
+              onError={(e) => {
+                const target = e.currentTarget;
+                if (!target.dataset.fallbackApplied) {
+                  target.dataset.fallbackApplied = 'true';
+                  target.src = resolveAssetUrl('/assets/aistudio/WhatsApp_Image_2026-10-29_at_4.49.15_PM_83440257.jpeg');
+                }
+              }}
               className="w-full h-full object-cover object-center"
               referrerPolicy="no-referrer"
             />

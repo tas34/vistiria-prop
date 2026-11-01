@@ -9,6 +9,7 @@ import {
   InquiryRecord,
 } from '../services/inquiryService';
 import { PropertyListing, PropertyType } from '../types/property';
+import { resolveAssetUrl } from '../utils/assetUrl';
 import {
   ShieldCheck,
   Lock,
@@ -860,7 +861,7 @@ export const AdminPage: React.FC = () => {
                           <div className="flex items-center gap-3 pt-2">
                             <div className="w-20 h-14 rounded-lg overflow-hidden border border-neutral-200 bg-neutral-100 flex-shrink-0">
                               <img
-                                src={propForm.heroImage}
+                                src={resolveAssetUrl(propForm.heroImage)}
                                 alt="Preview"
                                 className="w-full h-full object-cover"
                                 onError={(e) => {
@@ -929,7 +930,7 @@ export const AdminPage: React.FC = () => {
                     <div>
                       <div className="h-44 relative overflow-hidden bg-neutral-100">
                         <img
-                          src={prop.heroImage}
+                          src={resolveAssetUrl(prop.heroImage)}
                           alt={prop.title}
                           className="w-full h-full object-cover"
                         />

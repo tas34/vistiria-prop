@@ -7,7 +7,8 @@ export default defineConfig(() => {
   // Automatically detects repository name from GitHub Actions GITHUB_REPOSITORY (e.g. 'owner/repo')
   // or falls back to VITE_BASE_PATH / relative './'
   const repoName = process.env.GITHUB_REPOSITORY ? process.env.GITHUB_REPOSITORY.split('/')[1] : '';
-  const basePath = process.env.VITE_BASE_PATH || (repoName ? `/${repoName}/` : './');
+  const isDev = process.env.NODE_ENV !== 'production';
+  const basePath = process.env.VITE_BASE_PATH || (repoName ? `/${repoName}/` : (isDev ? '/' : './'));
 
   return {
     base: basePath,

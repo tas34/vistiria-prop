@@ -3,6 +3,7 @@ import { useNavigation } from '../context/NavigationContext';
 import { useProperties } from '../context/PropertyContext';
 import { SAMPLE_PROPERTIES } from '../data/properties';
 import { BUSINESS_INFO } from '../constants/business';
+import { resolveAssetUrl } from '../utils/assetUrl';
 import {
   ArrowLeft,
   Calendar,
@@ -121,7 +122,7 @@ export const PropertyDetailPage: React.FC = () => {
         {/* Main Display Image */}
         <div className="relative aspect-[16/9] lg:aspect-[21/9] w-full bg-neutral-950 rounded-2xl overflow-hidden shadow-lg border border-neutral-200">
           <img
-            src={property.gallery[activeImageIndex] || property.heroImage}
+            src={resolveAssetUrl(property.gallery[activeImageIndex] || property.heroImage)}
             alt={`${property.title} view ${activeImageIndex + 1}`}
             className="w-full h-full object-cover object-center transition-all duration-500"
             referrerPolicy="no-referrer"
@@ -144,7 +145,7 @@ export const PropertyDetailPage: React.FC = () => {
               }`}
             >
               <img
-                src={imgUrl}
+                src={resolveAssetUrl(imgUrl)}
                 alt={`Thumbnail ${idx + 1}`}
                 className="w-full h-full object-cover"
                 referrerPolicy="no-referrer"
