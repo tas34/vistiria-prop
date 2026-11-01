@@ -35,6 +35,11 @@ import {
   RefreshCw,
   Copy,
   Check,
+  Eye,
+  EyeOff,
+  KeyRound,
+  ArrowLeft,
+  HelpCircle,
 } from 'lucide-react';
 
 export const AdminPage: React.FC = () => {
@@ -42,16 +47,25 @@ export const AdminPage: React.FC = () => {
     user,
     isAdmin,
     loading: authLoading,
-    signInWithGoogle,
+    signInWithEmail,
+    sendPasswordReset,
     signOut,
     authError,
+    authSuccess,
     authHelp,
-    clearAuthError,
-    signInAsDevAdmin,
+    isAuthenticating,
+    clearAuthMessages,
     activeAdminEmail,
   } = useAuth();
   const { properties, saveProperty, deleteProperty, uploadImage, seedInitialData } = useProperties();
   const { showToast } = useNavigation();
+
+  // Admin Email & Password login states
+  const [adminEmail, setAdminEmail] = useState('');
+  const [adminPassword, setAdminPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showResetView, setShowResetView] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
 
   const [copiedDomain, setCopiedDomain] = useState(false);
   const [activeTab, setActiveTab] = useState<'inquiries' | 'properties' | 'status'>('inquiries');
@@ -70,6 +84,34 @@ export const AdminPage: React.FC = () => {
       setTimeout(() => setCopiedDomain(false), 2500);
     } catch {
       showToast('Please manually select and copy the domain.');
+    }
+  };
+
+  const handleAdminLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!adminEmail.trim()) {
+      showToast('Please enter your administrator email.');
+      return;
+    }
+    if (!adminPassword) {
+      showToast('Please enter your administrator password.');
+      return;
+    }
+    const success = await signInWithEmail(adminEmail, adminPassword);
+    if (success) {
+      showToast('Welcome, Administrator. Access granted.');
+    }
+  };
+
+  const handlePasswordReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!resetEmail.trim()) {
+      showToast('Please enter your administrator email.');
+      return;
+    }
+    const success = await sendPasswordReset(resetEmail);
+    if (success) {
+      showToast('Password reset link sent to your email.');
     }
   };
 
@@ -302,37 +344,25 @@ export const AdminPage: React.FC = () => {
             </div>
           ) : (
             <div className="flex items-center gap-2">
-              <button
-                onClick={signInWithGoogle}
-                className="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-neutral-950 bg-[#DEC5A0] hover:bg-[#E8CEAB] rounded-lg shadow-[0_0_20px_rgba(222,197,160,0.3)] transition-all cursor-pointer"
-              >
-                <LogIn className="w-4 h-4 text-neutral-950" />
-                <span>Sign In with Google</span>
-              </button>
-              {isInIframe && (
-                <button
-                  onClick={() => window.open(window.location.href, '_blank')}
-                  title="Open Admin in Standalone Window (Bypasses iframe cookie/pop-up limits)"
-                  className="p-2.5 text-[#DEC5A0] hover:text-white bg-white/10 hover:bg-white/15 rounded-lg transition-colors cursor-pointer"
-                >
-                  <ExternalLink className="w-4 h-4" />
-                </button>
-              )}
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-neutral-900 border border-[#DEC5A0]/30 text-xs text-[#DEC5A0] font-medium">
+                <Lock className="w-3.5 h-3.5 text-[#DEC5A0]" />
+                <span>Admin Authentication Required</span>
+              </span>
             </div>
           )}
         </div>
       </div>
 
       {authError && (
-        <div className="p-5 bg-gradient-to-r from-neutral-900 via-neutral-900 to-amber-950/80 border border-[#DEC5A0]/40 rounded-2xl shadow-xl text-xs text-neutral-200 space-y-4">
+        <div className="p-5 bg-gradient-to-r from-neutral-900 via-neutral-900 to-amber-950/80 border border-red-500/40 rounded-2xl shadow-xl text-xs text-neutral-200 space-y-3">
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+              <AlertCircle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
               <div className="space-y-1">
                 <div className="font-semibold text-sm text-[#F3E2C8] flex items-center gap-2">
-                  <span>Firebase Authentication Notice</span>
+                  <span>Administrator Authentication Notice</span>
                   {authHelp?.code && (
-                    <span className="px-2 py-0.5 text-[10px] bg-amber-950 text-amber-300 border border-amber-600/40 rounded font-mono">
+                    <span className="px-2 py-0.5 text-[10px] bg-red-950 text-red-300 border border-red-600/40 rounded font-mono">
                       {authHelp.code}
                     </span>
                   )}
@@ -343,117 +373,226 @@ export const AdminPage: React.FC = () => {
               </div>
             </div>
             <button
-              onClick={clearAuthError}
-              className="text-neutral-400 hover:text-white underline text-[11px] shrink-0"
+              onClick={clearAuthMessages}
+              className="text-neutral-400 hover:text-white underline text-[11px] shrink-0 cursor-pointer"
             >
               Dismiss
             </button>
           </div>
 
-          {authHelp?.isNetworkOrDomainError && (
-            <div className="pt-2 border-t border-white/10 space-y-3">
-              <div className="bg-black/40 p-3.5 rounded-xl border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div className="space-y-0.5">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">
-                    Required Firebase Authorized Domain:
-                  </span>
-                  <div className="font-mono text-xs text-[#DEC5A0] font-semibold select-all break-all">
-                    {authHelp.hostname || currentHostname}
-                  </div>
-                </div>
-                <button
-                  onClick={() => handleCopyDomain(authHelp.hostname || currentHostname)}
-                  className="px-3 py-1.5 bg-[#DEC5A0] hover:bg-[#E8CEAB] text-neutral-950 font-semibold rounded-lg text-xs flex items-center gap-1.5 shrink-0 transition-colors cursor-pointer"
-                >
-                  {copiedDomain ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                  <span>{copiedDomain ? 'Copied' : 'Copy Domain'}</span>
-                </button>
-              </div>
+          {authHelp?.canSendResetLink && authHelp.emailTarget && (
+            <div className="pt-2 border-t border-white/10 flex flex-wrap items-center gap-2.5">
+              <button
+                type="button"
+                onClick={async () => {
+                  const targetEmail = authHelp.emailTarget || adminEmail;
+                  const ok = await sendPasswordReset(targetEmail);
+                  if (ok) {
+                    showToast(`Password setup link sent to ${targetEmail}`);
+                  }
+                }}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-neutral-950 bg-[#DEC5A0] hover:bg-[#E8CEAB] rounded-lg transition-colors cursor-pointer"
+              >
+                <Mail className="w-3.5 h-3.5 text-neutral-950" />
+                <span>Email Me a Password Setup / Reset Link</span>
+              </button>
+              <a
+                href={authHelp.consoleUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-[#DEC5A0] hover:text-white bg-white/10 hover:bg-white/15 border border-white/15 rounded-lg transition-colors cursor-pointer"
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+                <span>Open Firebase Console Users</span>
+              </a>
+            </div>
+          )}
 
-              <div className="flex flex-wrap items-center gap-2.5 pt-1">
-                <a
-                  href={authHelp.consoleAuthorizedDomainsUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-[#F3E2C8] bg-white/10 hover:bg-white/20 border border-white/15 rounded-lg transition-colors cursor-pointer"
-                >
-                  <ExternalLink className="w-3.5 h-3.5" />
-                  <span>Open Firebase Console Settings</span>
-                </a>
-
-                <button
-                  onClick={() => window.open(window.location.href, '_blank')}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-neutral-950 bg-[#DEC5A0] hover:bg-[#E8CEAB] rounded-lg transition-colors cursor-pointer"
-                >
-                  <ExternalLink className="w-3.5 h-3.5" />
-                  <span>Launch in Standalone Window</span>
-                </button>
-
-                <button
-                  onClick={signInWithGoogle}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-neutral-300 hover:text-white bg-neutral-800 hover:bg-neutral-700 rounded-lg transition-colors cursor-pointer"
-                >
-                  <RefreshCw className="w-3.5 h-3.5" />
-                  <span>Retry Sign In</span>
-                </button>
-
-                <button
-                  onClick={() => signInAsDevAdmin('vistiria.properties@gmail.com')}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-emerald-300 hover:text-emerald-200 bg-emerald-950/70 border border-emerald-500/40 rounded-lg transition-colors cursor-pointer"
-                  title="Unlock admin console immediately for vistiria.properties@gmail.com in development preview"
-                >
-                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Enter as Admin (vistiria.properties@gmail.com)</span>
-                </button>
-              </div>
+          {authHelp?.isProviderDisabled && (
+            <div className="pt-2 border-t border-white/10 flex items-center gap-3">
+              <a
+                href={authHelp.consoleUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-neutral-950 bg-[#DEC5A0] hover:bg-[#E8CEAB] rounded-lg transition-colors cursor-pointer"
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+                <span>Enable Email/Password in Firebase Console</span>
+              </a>
+              <span className="text-[11px] text-neutral-400">
+                Turn on the "Email/Password" toggle in Authentication &gt; Sign-in method.
+              </span>
             </div>
           )}
         </div>
       )}
 
-      {/* Access Gate: Prompt Sign-In if not admin */}
-      {!isAdmin && (
-        <div className="bg-white p-10 sm:p-14 rounded-2xl border border-neutral-200 text-center max-w-xl mx-auto space-y-6 shadow-sm">
-          <div className="w-16 h-16 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center mx-auto text-amber-900 shadow-sm">
-            <Lock className="w-8 h-8 text-amber-800" />
+      {authSuccess && (
+        <div className="p-4 bg-emerald-950/70 border border-emerald-500/40 rounded-2xl shadow-md text-xs text-emerald-200 flex items-start justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+            <span>{authSuccess}</span>
           </div>
-          <div className="space-y-2">
+          <button
+            onClick={clearAuthMessages}
+            className="text-emerald-400 hover:text-emerald-200 underline text-[11px] shrink-0 cursor-pointer"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+
+      {/* Access Gate: Prompt Email & Password Sign-In if not admin */}
+      {!isAdmin && (
+        <div className="bg-white p-8 sm:p-12 rounded-2xl border border-neutral-200 text-left max-w-lg mx-auto space-y-6 shadow-sm">
+          <div className="text-center space-y-2">
+            <div className="w-14 h-14 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center mx-auto text-amber-900 shadow-sm mb-3">
+              <KeyRound className="w-7 h-7 text-amber-800" />
+            </div>
             <h2 className="font-serif-display text-2xl font-bold text-neutral-900">
-              Administrator Access
+              {showResetView ? 'Reset Admin Password' : 'Administrator Sign In'}
             </h2>
-            <p className="text-xs sm:text-sm text-neutral-600 leading-relaxed">
-              Authenticate to manage live property listings, review client inquiries, and manage website data.
+            <p className="text-xs sm:text-sm text-neutral-600 leading-relaxed max-w-sm mx-auto">
+              {showResetView
+                ? 'Enter your authorized email to receive a secure Firebase password reset link.'
+                : 'Enter your administrator email and password to access the management console.'}
             </p>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
-            <button
-              onClick={signInWithGoogle}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3 text-xs font-bold uppercase tracking-wider text-neutral-950 bg-[#DEC5A0] hover:bg-[#E8CEAB] rounded-lg shadow-sm transition-all cursor-pointer"
-            >
-              <LogIn className="w-4 h-4 text-neutral-950" />
-              <span>Authenticate Administrator</span>
-            </button>
+          {!showResetView ? (
+            <form onSubmit={handleAdminLogin} className="space-y-4 pt-2">
+              <div>
+                <label className="block text-xs font-semibold text-neutral-700 uppercase tracking-wider mb-1.5">
+                  Administrator Email
+                </label>
+                <div className="relative">
+                  <input
+                    type="email"
+                    required
+                    value={adminEmail}
+                    onChange={(e) => setAdminEmail(e.target.value)}
+                    placeholder="Enter your administrator email"
+                    className="w-full pl-10 pr-4 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl text-xs sm:text-sm text-neutral-900 focus:bg-white focus:border-amber-700 focus:ring-2 focus:ring-amber-700/20 outline-none transition-all"
+                  />
+                  <Mail className="w-4 h-4 text-neutral-400 absolute left-3.5 top-3" />
+                </div>
+              </div>
 
-            {isInIframe && (
-              <button
-                onClick={() => window.open(window.location.href, '_blank')}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 text-xs font-semibold text-neutral-700 bg-neutral-100 hover:bg-neutral-200 rounded-lg transition-all cursor-pointer"
-              >
-                <ExternalLink className="w-4 h-4" />
-                <span>Open in New Window</span>
-              </button>
-            )}
-          </div>
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs font-semibold text-neutral-700 uppercase tracking-wider">
+                    Password
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowResetView(true);
+                      clearAuthMessages();
+                    }}
+                    className="text-[11px] text-amber-800 hover:text-amber-950 hover:underline font-medium cursor-pointer"
+                  >
+                    Forgot password?
+                  </button>
+                </div>
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    required
+                    value={adminPassword}
+                    onChange={(e) => setAdminPassword(e.target.value)}
+                    placeholder="••••••••••••"
+                    className="w-full pl-10 pr-10 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl text-xs sm:text-sm text-neutral-900 focus:bg-white focus:border-amber-700 focus:ring-2 focus:ring-amber-700/20 outline-none transition-all"
+                  />
+                  <Lock className="w-4 h-4 text-neutral-400 absolute left-3.5 top-3" />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3.5 top-3 text-neutral-400 hover:text-neutral-600 cursor-pointer"
+                    title={showPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
 
-          <div className="pt-4 border-t border-neutral-100 flex flex-col items-center gap-2">
-            <button
-              onClick={() => signInAsDevAdmin('vistiria.properties@gmail.com')}
-              className="text-xs text-neutral-500 hover:text-amber-900 underline flex items-center gap-1.5 transition-colors cursor-pointer"
-            >
-              <ShieldCheck className="w-3.5 h-3.5 text-amber-800" />
-              <span>Direct Admin Access (vistiria.properties@gmail.com)</span>
-            </button>
+              <div className="pt-2">
+                <button
+                  type="submit"
+                  disabled={isAuthenticating}
+                  className="w-full py-3 px-6 bg-gradient-to-r from-neutral-900 to-neutral-800 hover:from-black hover:to-neutral-900 text-[#F7EFE2] rounded-xl text-xs font-bold uppercase tracking-wider shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
+                >
+                  {isAuthenticating ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin text-[#DEC5A0]" />
+                      <span>Authenticating...</span>
+                    </>
+                  ) : (
+                    <>
+                      <LogIn className="w-4 h-4 text-[#DEC5A0]" />
+                      <span>Sign In with Email &amp; Password</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          ) : (
+            <form onSubmit={handlePasswordReset} className="space-y-4 pt-2">
+              <div>
+                <label className="block text-xs font-semibold text-neutral-700 uppercase tracking-wider mb-1.5">
+                  Authorized Administrator Email
+                </label>
+                <div className="relative">
+                  <input
+                    type="email"
+                    required
+                    value={resetEmail}
+                    onChange={(e) => setResetEmail(e.target.value)}
+                    placeholder="Enter your administrator email"
+                    className="w-full pl-10 pr-4 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl text-xs sm:text-sm text-neutral-900 focus:bg-white focus:border-amber-700 focus:ring-2 focus:ring-amber-700/20 outline-none transition-all"
+                  />
+                  <Mail className="w-4 h-4 text-neutral-400 absolute left-3.5 top-3" />
+                </div>
+              </div>
+
+              <div className="pt-2 space-y-2">
+                <button
+                  type="submit"
+                  disabled={isAuthenticating}
+                  className="w-full py-3 px-6 bg-gradient-to-r from-amber-800 to-amber-900 hover:from-amber-900 hover:to-amber-950 text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
+                >
+                  {isAuthenticating ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Dispatching Reset Link...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Mail className="w-4 h-4" />
+                      <span>Send Password Reset Link</span>
+                    </>
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowResetView(false);
+                    clearAuthMessages();
+                  }}
+                  className="w-full py-2.5 text-xs text-neutral-600 hover:text-neutral-900 font-medium flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <span>Back to Sign In</span>
+                </button>
+              </div>
+            </form>
+          )}
+
+          <div className="pt-4 border-t border-neutral-100 flex items-start gap-2.5 text-[11px] text-neutral-500 leading-relaxed bg-neutral-50 p-3.5 rounded-xl border border-neutral-200/60">
+            <ShieldCheck className="w-4 h-4 text-amber-800 shrink-0 mt-0.5" />
+            <div>
+              <span className="font-semibold text-neutral-700">Strict Access Control:</span> Restricted solely to designated Vistiria Properties administrators. Public registration is not allowed.
+            </div>
           </div>
         </div>
       )}
@@ -1042,7 +1181,7 @@ export const AdminPage: React.FC = () => {
                     <span>Firebase Authentication</span>
                   </div>
                   <div className="text-neutral-600 space-y-1">
-                    <div>Provider: Google Identity Popup (Zero redirection delay)</div>
+                    <div>Provider: Email &amp; Password Authentication (Local Persistence)</div>
                     <div>Authorized Admins: <strong>vistiria.properties@gmail.com, t4990418@gmail.com</strong></div>
                     <div>Session Persistence: Local storage token persistence</div>
                   </div>
@@ -1068,9 +1207,9 @@ export const AdminPage: React.FC = () => {
                 </div>
                 <ul className="list-disc list-inside space-y-1.5 pl-1 text-neutral-700">
                   <li><strong>100% Free Plan:</strong> Operating completely within Google Firebase's free Spark plan ($0/month, no credit card or Blaze subscription required).</li>
-                  <li><strong>Properties & Images in Firestore:</strong> All property descriptions, specifications, pricing, and photos are saved directly into the <code>properties</code> Firestore collection.</li>
+                  <li><strong>Properties &amp; Images in Firestore:</strong> All property descriptions, specifications, pricing, and photos are saved directly into the <code>properties</code> Firestore collection.</li>
                   <li><strong>Client Inquiries in Firestore:</strong> Every buyer request, site visit booking, and contact message is securely logged into the <code>inquiries</code> Firestore collection.</li>
-                  <li><strong>Google Authentication:</strong> Secure authentication enabled for authorized administrators.</li>
+                  <li><strong>Email/Password Authentication:</strong> Secure Email &amp; Password authentication enabled for authorized administrators.</li>
                 </ul>
               </div>
 
