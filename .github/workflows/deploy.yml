@@ -1,4 +1,4 @@
-name: Deploy to gh-pages Branch
+name: Deploy to GitHub Pages
 
 on:
   push:
@@ -7,12 +7,14 @@ on:
       - master
   workflow_dispatch:
 
-# Grants write permission to push the built dist folder to the gh-pages branch
+# Permissions required to create and push the gh-pages branch
 permissions:
   contents: write
+  pages: write
+  id-token: write
 
 concurrency:
-  group: 'gh-pages-deploy'
+  group: 'pages-deploy'
   cancel-in-progress: true
 
 jobs:
@@ -34,8 +36,25 @@ jobs:
       - name: Build production bundle
         run: npm run build
 
-      - name: Deploy to gh-pages branch
+      - name: Deploy to gh-pages branch (creates gh-pages branch automatically)
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./dist
+          force_orphan: true
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+        continue-on-error: true
+
+      - name: Upload artifact for GitHub Pages
+        uses: actions/upload-pages-artifact@v3
+        continue-on-error: true
+        with:
+          path: ./dist
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+        continue-on-error: true
+
